@@ -7,6 +7,10 @@ status = "actively-developed"
 harness = false
 name = "ring_generic"
 
+[[bench]]
+harness = false
+name = "bounded_ring_generic"
+
 [dependencies]
 log = "^0.4"
 
@@ -20,7 +24,7 @@ criterion = "^0.3"
 flexi_logger = "^0.14"
 
 [dev-dependencies.async_executors]
-features = ["localpool", "threadpool", "tokio_ct", "tokio_tp", "juliex"]
+features = ["localpool", "threadpool", "tokio_ct", "tokio_tp", "juliex", "async_std"]
 path = "../async_executors"
 
 [package]

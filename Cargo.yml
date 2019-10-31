@@ -37,7 +37,7 @@ dependencies:
 
 dev-dependencies:
 
-  async_executors: { path: ../async_executors, features: [localpool, threadpool, tokio_ct, tokio_tp, juliex] }
+  async_executors: { path: ../async_executors, features: [localpool, threadpool, tokio_ct, tokio_tp, juliex, async_std] }
   flexi_logger   : ^0.14
   criterion      : ^0.3
 
@@ -45,6 +45,9 @@ dev-dependencies:
 bench:
 
   - name   : ring_generic
+    harness: false
+
+  - name   : bounded_ring_generic
     harness: false
 
 
