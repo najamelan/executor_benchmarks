@@ -1,0 +1,56 @@
+package:
+
+  # When releasing to crates.io:
+  #
+  # - Update CHANGELOG.md.
+  # - Update version numbers in install section of readme.
+  # - merge dev branch into master
+  # - create git tag
+  #
+  version    : 0.1.0
+  name       : executor_benchmarks
+  authors    : [ Naja Melan <najamelan@autistici.org> ]
+  edition    : '2018'
+  description: Benchmarks for different executor implementations
+  repository : https://github.com/najamelan/async_runtime
+  license    : Unlicense
+  categories : [ concurrency, asynchronous ]
+  keywords   : [ runtime, async, futures ]
+  readme     : README.md
+
+  metadata:
+    docs.rs:
+      all-features: true
+
+
+badges:
+
+  maintenance : { status: actively-developed }
+
+
+
+dependencies:
+
+  futures-preview: { version: ^0.3.0-alpha, features: [std], default-features: false }
+  log            : ^0.4
+
+
+dev-dependencies:
+
+  async_executors: { path: ../async_executors, features: [localpool, threadpool, tokio_ct, tokio_tp, juliex] }
+  flexi_logger   : ^0.14
+  criterion      : ^0.3
+
+
+bench:
+
+  - name   : ring_generic
+    harness: false
+
+
+profile:
+
+  release:
+
+    codegen-units: 1
+    # debug        : true

@@ -1,0 +1,44 @@
+# Auto-generated from "Cargo.yml"
+[badges]
+[badges.maintenance]
+status = "actively-developed"
+
+[[bench]]
+harness = false
+name = "ring_generic"
+
+[dependencies]
+log = "^0.4"
+
+[dependencies.futures-preview]
+default-features = false
+features = ["std"]
+version = "^0.3.0-alpha"
+
+[dev-dependencies]
+criterion = "^0.3"
+flexi_logger = "^0.14"
+
+[dev-dependencies.async_executors]
+features = ["localpool", "threadpool", "tokio_ct", "tokio_tp", "juliex"]
+path = "../async_executors"
+
+[package]
+authors = ["Naja Melan <najamelan@autistici.org>"]
+categories = ["concurrency", "asynchronous"]
+description = "Benchmarks for different executor implementations"
+edition = "2018"
+keywords = ["runtime", "async", "futures"]
+license = "Unlicense"
+name = "executor_benchmarks"
+readme = "README.md"
+repository = "https://github.com/najamelan/async_runtime"
+version = "0.1.0"
+
+[package.metadata]
+[package.metadata."docs.rs"]
+all-features = true
+
+[profile]
+[profile.release]
+codegen-units = 1
