@@ -2,9 +2,11 @@ use
 {
 	executor_benchmarks :: * ,
 	criterion           :: { Criterion, criterion_group, criterion_main } ,
-	futures::executor   :: { block_on } ,
-	futures::task       :: { LocalSpawnExt } ,
-	async_executors     :: { * } ,
+	futures::executor   :: { block_on, LocalPool, ThreadPool            } ,
+	futures::task       :: { LocalSpawnExt                              } ,
+	async_executors     :: { *                                          } ,
+	tokio               :: { runtime::Builder                           } ,
+	std                 :: { convert::TryFrom                           } ,
 };
 
 
@@ -22,40 +24,41 @@ fn ring( c: &mut Criterion )
 		{
 			b.iter( ||
 			{
-				let mut pool    = LocalPool::new();
-				let     spawner = pool.handle();
+				let mut pool     = LocalPool::new();
+				let     spawner  = pool.spawner();
+				let     spawner2 = spawner.clone();
 
 				let bench = async move
 				{
 					let mut ring = BoundedRing::new( *nodes );
-					ring.run_local( spawner ).await;
+					ring.run_local( spawner2 ).await;
 				};
 
-				pool.spawn_local( bench ).expect( "spawn bench" );
+				spawner.spawn_local( bench ).expect( "spawn bench" );
 
 				pool.run();
 			});
 		});
 
 
-		group.bench_function( format!( "TokioCt spawn {}", &nodes ), |b|
-		{
-			b.iter( ||
-			{
-				let mut pool    = TokioCt::new();
-				let     spawner = pool.handle();
+		// group.bench_function( format!( "TokioCt spawn {}", &nodes ), |b|
+		// {
+		// 	b.iter( ||
+		// 	{
+		// 		let mut pool    = TokioCt::new();
+		// 		let     spawner = pool.handle();
 
-				let bench = async move
-				{
-					let mut ring = BoundedRing::new( *nodes );
-					ring.run_local( spawner ).await;
-				};
+		// 		let bench = async move
+		// 		{
+		// 			let mut ring = BoundedRing::new( *nodes );
+		// 			ring.run_local( spawner ).await;
+		// 		};
 
-				pool.spawn_local( bench ).expect( "spawn bench" );
+		// 		pool.spawn_local( bench ).expect( "spawn bench" );
 
-				pool.run().expect( "run tokio_ct" );
-			});
-		});
+		// 		pool.run().expect( "run tokio_ct" );
+		// 	});
+		// });
 
 
 		group.bench_function( format!( "ThreadPool spawn {}", &nodes ), |b|
@@ -74,22 +77,10 @@ fn ring( c: &mut Criterion )
 		{
 			b.iter( ||
 			{
-				let     pool = TokioTp::new();
+				let mut pool = TokioTp::try_from( &mut Builder::new() ).expect( "build tokio threadpool" );
 				let mut ring = BoundedRing::new( *nodes );
 
-				block_on( ring.run( pool.handle() ) );
-			});
-		});
-
-
-		group.bench_function( format!( "Juliex spawn {}", &nodes ), |b|
-		{
-			b.iter( ||
-			{
-				let     pool = Juliex::new();
-				let mut ring = BoundedRing::new( *nodes );
-
-				block_on( ring.run( pool ) );
+				pool.block_on( ring.run( pool.handle() ) );
 			});
 		});
 
@@ -98,7 +89,7 @@ fn ring( c: &mut Criterion )
 		{
 			b.iter( ||
 			{
-				let     pool = AsyncStd::new();
+				let     pool = AsyncStd::default();
 				let mut ring = BoundedRing::new( *nodes );
 
 				block_on( ring.run( pool ) );

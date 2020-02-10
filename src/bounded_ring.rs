@@ -1,5 +1,6 @@
 //! This uses bounded channels and has the possibility to spawn each message forwarding on the executor
-//! rather than
+//! rather than awaiting.
+//!
 use futures::{ SinkExt, StreamExt, channel::mpsc, task::{ LocalSpawn, LocalSpawnExt, Spawn, SpawnExt } };
 use std::{ sync::{ atomic::{ AtomicUsize, Ordering } } };
 use log::*;
@@ -85,7 +86,7 @@ impl BoundedRing
 
 	// Run the benchmark.
 	//
-	pub async fn run( &mut self, mut exec: impl Spawn + Clone + Send + 'static )
+	pub async fn run( &mut self, exec: impl Spawn + Clone + Send + 'static )
 	{
 		debug!( "BoundedRing: start" );
 
@@ -121,7 +122,7 @@ impl BoundedRing
 
 	// Run the benchmark on a local pool.
 	//
-	pub async fn run_local( &mut self, mut exec: impl LocalSpawn + Spawn + Clone + 'static )
+	pub async fn run_local( &mut self, exec: impl LocalSpawn + Spawn + Clone + 'static )
 	{
 		debug!( "BoundedRing: start" );
 
@@ -168,7 +169,7 @@ pub struct BoundedNode
 
 impl BoundedNode
 {
-	async fn run( &mut self, mut done_tx: mpsc::Sender<()>, mut exec: impl Spawn )
+	async fn run( &mut self, mut done_tx: mpsc::Sender<()>, exec: impl Spawn )
 	{
 		debug!( "BoundedNode {}: run", self.id );
 

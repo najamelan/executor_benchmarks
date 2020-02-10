@@ -31,13 +31,14 @@ badges:
 
 dependencies:
 
-  futures-preview: { version: ^0.3.0-alpha, features: [std], default-features: false }
-  log            : ^0.4
+  futures: { version: ^0.3, features: [std, executor, thread-pool], default-features: false }
+  log    : ^0.4
 
 
 dev-dependencies:
 
-  async_executors: { path: ../async_executors, features: [localpool, threadpool, tokio_ct, tokio_tp, juliex, async_std] }
+  tokio          : { version: ^0.2, features: [ rt-core, rt-threaded ] }
+  async_executors: { path: ../async_executors, features: [ tokio_tp, async_std ] }
   flexi_logger   : ^0.14
   criterion      : ^0.3
 

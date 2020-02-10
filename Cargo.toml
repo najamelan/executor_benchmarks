@@ -14,18 +14,22 @@ name = "bounded_ring_generic"
 [dependencies]
 log = "^0.4"
 
-[dependencies.futures-preview]
+[dependencies.futures]
 default-features = false
-features = ["std"]
-version = "^0.3.0-alpha"
+features = ["std", "executor", "thread-pool"]
+version = "^0.3"
 
 [dev-dependencies]
 criterion = "^0.3"
 flexi_logger = "^0.14"
 
 [dev-dependencies.async_executors]
-features = ["localpool", "threadpool", "tokio_ct", "tokio_tp", "juliex", "async_std"]
+features = ["tokio_tp", "async_std"]
 path = "../async_executors"
+
+[dev-dependencies.tokio]
+features = ["rt-core", "rt-threaded"]
+version = "^0.2"
 
 [package]
 authors = ["Naja Melan <najamelan@autistici.org>"]
