@@ -5,7 +5,7 @@ status = "actively-developed"
 
 [[bench]]
 harness = false
-name = "handle_vs_native_handle"
+name = "ring"
 
 [dependencies]
 async-std = "^1"
