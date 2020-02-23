@@ -1,20 +1,20 @@
 //! This uses bounded channels and has the possibility to spawn each message forwarding on the executor
 //! rather than awaiting.
 //!
-use futures::{ SinkExt, StreamExt, channel::mpsc, task::{ LocalSpawn, LocalSpawnExt, Spawn, SpawnExt } };
+use futures::{ SinkExt, StreamExt, channel::mpsc, task::{ LocalSpawn, LocalSpawnExt, Spawn } };
 use std::{ sync::{ atomic::{ AtomicUsize, Ordering } } };
 use log::*;
 
 static DONE: AtomicUsize = AtomicUsize::new( 0 );
 
 
-pub struct BoundedRing
+pub struct LocalRing
 {
-	nodes: Option< Vec<BoundedNode> > ,
+	nodes: Option< Vec<LocalNode> > ,
 }
 
 
-impl BoundedRing
+impl LocalRing
 {
 	// Create channels between all the nodes.
 	//
@@ -39,7 +39,7 @@ impl BoundedRing
 		//
 		let (tx, mut next_rx) = mpsc::channel( channel_size );
 
-		nodes.push( BoundedNode { id: 1, n, tx, rx: last_rx } );
+		nodes.push( LocalNode { id: 1, n, tx, rx: last_rx } );
 
 
 		// All but first and last.
@@ -49,7 +49,7 @@ impl BoundedRing
 		{
 			let (tx, rx) = mpsc::channel( channel_size );
 
-			nodes.push( BoundedNode { id, n, tx, rx: next_rx } );
+			nodes.push( LocalNode { id, n, tx, rx: next_rx } );
 
 			next_rx = rx;
 		}
@@ -57,7 +57,7 @@ impl BoundedRing
 
 		// The last node
 		//
-		nodes.push( BoundedNode { id: n, n, tx: last_tx, rx: next_rx } );
+		nodes.push( LocalNode { id: n, n, tx: last_tx, rx: next_rx } );
 
 		Self
 		{
@@ -86,9 +86,9 @@ impl BoundedRing
 
 	// Run the benchmark.
 	//
-	pub async fn run( &mut self, exec: impl Spawn + Clone + Send + 'static )
+	pub async fn run( &mut self, exec: impl LocalSpawn + Clone + 'static )
 	{
-		debug!( "BoundedRing: start" );
+		debug!( "LocalRing: start" );
 
 		// Need to reset the DONE counter, since it might be reused on repeated benchmarks.
 		//
@@ -103,14 +103,14 @@ impl BoundedRing
 			let done_tx = done_tx.clone();
 
 			let exec2 = exec.clone();
-			exec.spawn( async move { node.run( done_tx, exec2 ).await; } ).expect( "spawn node" );
+			exec.spawn_local( async move { node.run( done_tx, exec2 ).await; } ).expect( "spawn node" );
 		};
 
 		let res = done_rx.next().await;
 
 		debug_assert!( res.is_some() );
 
-		debug!( "BoundedRing: end" );
+		debug!( "LocalRing: end" );
 
 
 		// Just a memory barrier.
@@ -124,7 +124,7 @@ impl BoundedRing
 	//
 	pub async fn run_local( &mut self, exec: impl LocalSpawn + Spawn + Clone + 'static )
 	{
-		debug!( "BoundedRing: start" );
+		debug!( "LocalRing: start" );
 
 		// Need to reset the DONE counter, since it might be reused on repeated benchmarks.
 		//
@@ -147,7 +147,7 @@ impl BoundedRing
 		debug_assert!( res.is_some() );
 		drop( exec );
 
-		debug!( "BoundedRing: end" );
+		debug!( "LocalRing: end" );
 
 
 		// Just a memory barrier.
@@ -160,7 +160,7 @@ impl BoundedRing
 // Each node will start by sending a 1 to the next node. When the counter has come back and
 // been incremented by all nodes, the operation is complete.
 //
-pub struct BoundedNode
+pub struct LocalNode
 {
 	id: usize                 ,
 	n : usize                 ,
@@ -168,14 +168,14 @@ pub struct BoundedNode
 	rx: mpsc::Receiver<usize> ,
 }
 
-impl BoundedNode
+impl LocalNode
 {
-	async fn run( &mut self, mut done_tx: mpsc::Sender<()>, exec: impl Spawn )
+	async fn run( &mut self, mut done_tx: mpsc::Sender<()>, exec: impl LocalSpawn )
 	{
-		debug!( "BoundedNode {}: run", self.id );
+		debug!( "LocalNode {}: run", self.id );
 
 		let mut tx = self.tx.clone();
-		exec.spawn( async move { tx.send( 1 ).await.expect( "Node: send initial message" ); } )
+		exec.spawn_local( async move { tx.send( 1 ).await.expect( "Node: send initial message" ); } )
 
 			.expect( "spawn forward" );
 
@@ -193,7 +193,7 @@ impl BoundedNode
 			//
 			if msg == self.n
 			{
-				trace!( "BoundedNode {}: received our own message back", self.id );
+				trace!( "LocalNode {}: received our own message back", self.id );
 
 				// Store the fact that we are done.
 				//
@@ -203,7 +203,7 @@ impl BoundedNode
 				//
 				if old+1 == self.n
 				{
-					trace!( "BoundedNode {}: all done", self.id );
+					trace!( "LocalNode {}: all done", self.id );
 
 					break;
 				}
@@ -213,18 +213,18 @@ impl BoundedNode
 				continue;
 			}
 
-			trace!( "BoundedNode {}: forwarding a message", self.id );
+			trace!( "LocalNode {}: forwarding a message", self.id );
 
 			// forward the message
 			//
 			let mut tx = self.tx.clone();
 
-			exec.spawn( async move { tx.send( msg + 1 ).await.expect( "BoundedNode: forward message" ); } )
+			exec.spawn_local( async move { tx.send( msg + 1 ).await.expect( "LocalNode: forward message" ); } )
 
 				.expect( "spawn forward" );
 		}
 
-		trace!( "BoundedNode {}: close our sender", self.id );
+		trace!( "LocalNode {}: close our sender", self.id );
 
 		// Allow nodes that where still passing on messages to detect that we are done.
 		//
@@ -246,7 +246,7 @@ impl BoundedNode
 			done_tx.send(()).await.expect( "Send DONE" );
 		}
 
-		debug!( "BoundedNode {}: run END", self.id );
+		debug!( "LocalNode {}: run END", self.id );
 	}
 }
 
@@ -264,10 +264,10 @@ mod tests
 	//
 	fn off_by_one_or_not()
 	{
-		let ring2 = BoundedRing::new( 2 );
+		let ring2 = LocalRing::new( 2 );
 		assert_eq!( 2, ring2.nodes.unwrap().len() );
 
-		let ring2 = BoundedRing::new( 3 );
+		let ring2 = LocalRing::new( 3 );
 		assert_eq!( 3, ring2.nodes.unwrap().len() );
 	}
 }

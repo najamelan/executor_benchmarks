@@ -5,31 +5,28 @@ status = "actively-developed"
 
 [[bench]]
 harness = false
-name = "ring_generic"
-
-[[bench]]
-harness = false
-name = "bounded_ring_generic"
+name = "handle_vs_native_handle"
 
 [dependencies]
+async-std = "^1"
 log = "^0.4"
+
+[dependencies.async_executors]
+features = ["tokio_ct", "tokio_tp", "async_std", "spawn_handle", "localpool", "threadpool"]
+version = "0.1.0-alpha"
 
 [dependencies.futures]
 default-features = false
 features = ["std", "executor", "thread-pool"]
 version = "^0.3"
 
+[dependencies.tokio]
+features = ["rt-core", "rt-threaded"]
+version = "^0.2"
+
 [dev-dependencies]
 criterion = "^0.3"
 flexi_logger = "^0.14"
-
-[dev-dependencies.async_executors]
-features = ["tokio_tp", "async_std"]
-path = "../async_executors"
-
-[dev-dependencies.tokio]
-features = ["rt-core", "rt-threaded"]
-version = "^0.2"
 
 [package]
 authors = ["Naja Melan <najamelan@autistici.org>"]
@@ -50,3 +47,4 @@ all-features = true
 [profile]
 [profile.release]
 codegen-units = 1
+debug = true
