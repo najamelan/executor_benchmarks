@@ -69,7 +69,7 @@ impl HandleRing
 
 	// Run the benchmark.
 	//
-	pub async fn run( &mut self, exec: impl SpawnHandle + Clone + Send + Sync + 'static )
+	pub async fn run( &mut self, exec: impl SpawnHandle<()> + Clone + Send + Sync + 'static )
 	{
 		debug!( "HandleRing: start" );
 
@@ -142,7 +142,7 @@ pub struct HandleNode
 
 impl HandleNode
 {
-	async fn run( &mut self, exec: impl SpawnHandle )
+	async fn run( &mut self, exec: impl SpawnHandle<()> )
 	{
 		debug!( "HandleNode {}: run", self.id );
 

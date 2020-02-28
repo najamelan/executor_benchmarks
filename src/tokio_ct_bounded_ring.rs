@@ -1,21 +1,21 @@
 //! This uses bounded channels and has the possibility to spawn each message forwarding on the executor
 //! rather than awaiting.
 //!
-use futures::{ future::join_all, SinkExt, StreamExt, channel::mpsc, FutureExt };
+use futures::{ future::join_all, SinkExt, StreamExt, channel::mpsc };
 use std::{ sync::{ atomic::{ AtomicUsize, Ordering } } };
 use log::*;
-use async_executors::*;
+use tokio::task;
 
 static DONE: AtomicUsize = AtomicUsize::new( 0 );
 
 
-pub struct HandleRingOs
+pub struct TokioCtNativeRing
 {
-	nodes: Option< Vec<HandleNodeOs> > ,
+	nodes: Option< Vec<TokioCtNativeNode> > ,
 }
 
 
-impl HandleRingOs
+impl TokioCtNativeRing
 {
 	// Create channels between all the nodes.
 	//
@@ -40,7 +40,7 @@ impl HandleRingOs
 		//
 		let (tx, mut next_rx) = mpsc::channel( channel_size );
 
-		nodes.push( HandleNodeOs { id: 1, n, tx, rx: last_rx } );
+		nodes.push( TokioCtNativeNode { id: 1, n, tx, rx: last_rx } );
 
 
 		// All but first and last.
@@ -50,7 +50,7 @@ impl HandleRingOs
 		{
 			let (tx, rx) = mpsc::channel( channel_size );
 
-			nodes.push( HandleNodeOs { id, n, tx, rx: next_rx } );
+			nodes.push( TokioCtNativeNode { id, n, tx, rx: next_rx } );
 
 			next_rx = rx;
 		}
@@ -58,7 +58,7 @@ impl HandleRingOs
 
 		// The last node
 		//
-		nodes.push( HandleNodeOs { id: n, n, tx: last_tx, rx: next_rx } );
+		nodes.push( TokioCtNativeNode { id: n, n, tx: last_tx, rx: next_rx } );
 
 		Self
 		{
@@ -69,70 +69,33 @@ impl HandleRingOs
 
 	// Run the benchmark.
 	//
-	pub async fn run( &mut self, exec: impl SpawnHandleOs<()> + Clone + Send + Sync + 'static )
+	pub async fn run( &mut self )
 	{
-		debug!( "HandleRingOs: start" );
+		debug!( "TokioCtNativeRing: start" );
 
 		// Need to reset the DONE counter, since it might be reused on repeated benchmarks.
 		//
 		DONE.store( 0, Ordering::SeqCst );
 
-
 		let mut handles = Vec::with_capacity( self.nodes.as_ref().unwrap().len() );
 
 		for mut node in self.nodes.take().unwrap().into_iter()
 		{
-			let exec2 = exec.clone();
-			handles.push( exec.spawn_handle_os( async move { node.run( exec2 ).await; }.boxed() ).expect( "spawn node" ) );
+			let node = async move { node.run().await; };
+			handles.push( task::spawn_local( node ) );
 		};
 
 		join_all( handles ).await;
 
-		debug!( "HandleRingOs: end" );
+		debug!( "TokioCtNativeRing: end" );
 	}
-
-
-
-	// // Run the benchmark on a local pool.
-	// //
-	// pub async fn run_local( &mut self, exec: impl LocalSpawn + Spawn + Clone + 'static )
-	// {
-	// 	debug!( "HandleRingOs: start" );
-
-	// 	// Need to reset the DONE counter, since it might be reused on repeated benchmarks.
-	// 	//
-	// 	DONE.store( 0, Ordering::SeqCst );
-
-
-	// 	let (done_tx, mut done_rx) = mpsc::channel(0);
-
-
-	// 	for mut node in self.nodes.take().unwrap().into_iter()
-	// 	{
-	// 		let done_tx = done_tx.clone();
-
-	// 		let exec2 = exec.clone();
-	// 		exec.spawn_local( async move { node.run( done_tx, exec2 ).await; } ).expect( "spawn node" );
-	// 	};
-
-	// 	let res = done_rx.next().await;
-
-	// 	debug_assert!( res.is_some() );
-
-	// 	debug!( "HandleRingOs: end" );
-
-
-	// 	// Just a memory barrier.
-	// 	//
-	// 	// DONE.store( 0, Ordering::SeqCst );
-	// }
 }
 
 
 // Each node will start by sending a 1 to the next node. When the counter has come back and
 // been incremented by all nodes, the operation is complete.
 //
-pub struct HandleNodeOs
+pub struct TokioCtNativeNode
 {
 	id: usize                 ,
 	n : usize                 ,
@@ -140,18 +103,16 @@ pub struct HandleNodeOs
 	rx: mpsc::Receiver<usize> ,
 }
 
-impl HandleNodeOs
+impl TokioCtNativeNode
 {
-	async fn run( &mut self, exec: impl SpawnHandleOs<()> )
+	async fn run( &mut self )
 	{
-		debug!( "HandleNodeOs {}: run", self.id );
+		debug!( "TokioCtNativeNode {}: run", self.id );
 
 		let mut tx = self.tx.clone();
-		exec.spawn_handle_os( async move { tx.send( 1 ).await.expect( "Node: send initial message" ); }.boxed() )
+		task::spawn_local( async move { tx.send( 1 ).await.expect( "Node: send initial message" ); } );
 
-			.expect( "spawn forward" ).await;
-
-		debug!( "HandleNodeOs {}: start loop", self.id );
+		debug!( "TokioCtNativeNode {}: start loop", self.id );
 
 		// Two ways out of this loop:
 		// - if we are the last node to finish, we break and then close our channel.
@@ -166,7 +127,7 @@ impl HandleNodeOs
 			//
 			if msg == self.n
 			{
-				trace!( "HandleNodeOs {}: received our own message back", self.id );
+				trace!( "TokioCtNativeNode {}: received our own message back", self.id );
 
 				// Store the fact that we are done.
 				//
@@ -176,7 +137,7 @@ impl HandleNodeOs
 				//
 				if old+1 == self.n
 				{
-					trace!( "HandleNodeOs {}: all done", self.id );
+					trace!( "TokioCtNativeNode {}: all done", self.id );
 
 					break;
 				}
@@ -186,24 +147,22 @@ impl HandleNodeOs
 				continue;
 			}
 
-			trace!( "HandleNodeOs {}: forwarding a message", self.id );
+			trace!( "TokioCtNativeNode {}: forwarding a message", self.id );
 
 			// forward the message
 			//
 			let mut tx = self.tx.clone();
 
-			exec.spawn_handle_os( async move { tx.send( msg + 1 ).await.expect( "HandleNodeOs: forward message" ); }.boxed() )
-
-				.expect( "spawn forward" ).await;
+			task::spawn_local( async move { tx.send( msg + 1 ).await.expect( "TokioCtNativeNode: forward message" ); } );
 		}
 
-		trace!( "HandleNodeOs {}: close our sender", self.id );
+		trace!( "TokioCtNativeNode {}: close our sender", self.id );
 
 		// Allow nodes that where still passing on nodes to detect that we are done.
 		//
 		self.tx.close().await.expect( "close channel" );
 
-		debug!( "HandleNodeOs {}: run END", self.id );
+		debug!( "TokioCtNativeNode {}: run END", self.id );
 	}
 }
 
@@ -221,10 +180,10 @@ mod tests
 	//
 	fn off_by_one_or_not()
 	{
-		let ring2 = HandleRingOs::new( 2 );
+		let ring2 = TokioCtNativeRing::new( 2 );
 		assert_eq!( 2, ring2.nodes.unwrap().len() );
 
-		let ring2 = HandleRingOs::new( 3 );
+		let ring2 = TokioCtNativeRing::new( 3 );
 		assert_eq!( 3, ring2.nodes.unwrap().len() );
 	}
 }

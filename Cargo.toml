@@ -13,7 +13,8 @@ log = "^0.4"
 
 [dependencies.async_executors]
 features = ["tokio_ct", "tokio_tp", "async_std", "spawn_handle", "localpool", "threadpool"]
-version = "0.1.0-alpha"
+path = "../async_executors"
+version = "^0.2"
 
 [dependencies.futures]
 default-features = false
@@ -47,4 +48,4 @@ all-features = true
 [profile]
 [profile.release]
 codegen-units = 1
-debug = true
+debug = false

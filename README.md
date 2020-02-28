@@ -2,6 +2,7 @@
 
 This repository holds some benchmarks for async executors in Rust. Currently there is but one benchmark, trying to evaluate the
 overhead introduced by the different spawning traits provided by the [async_executors](https://crates.io/crates/async_executors) crate.
+This branch holds the benchmarks for async_executors version 0.2. See the [master branch](https://github.com/najamelan/executor_benchmarks) for other versions.
 
 ## Ring: concurrent message passing
 
@@ -31,81 +32,76 @@ The following results are from running `cargo bench --bench ring` on a machine w
 - CPU: AMD® Ryzen 9 3900x 12-core processor × 24
 - Memory: GSKILL DDR4 32GB (4x8) F4-3600C18Q-32GVK
 - MB: Gigabyte X570 Aorus Elite
+- rustc: rustc 1.43.0-nightly (6fd8798f4 2020-02-25) (codegen-units=1)
+- futures: 0.3.4
+- tokio: 0.2.12
+- async-std: 1.5.0
 
 ```
 Executor                          spawn API               N   avg time/iter
 ----------------------------------------------------------------------------
-LocalPool                         LocalSpawn             10   32.607 us
-LocalPool                         LocalSpawnHandle       10   54.327 us
-LocalPool                         LocalSpawnHandleOs     10   55.195 us
+LocalPool                         LocalSpawn             10   31.360 us
+LocalPool                         LocalSpawnHandle       10   53.154 us
 
-TokioCt                           LocalSpawn             10   227.04 us
-TokioCt                           LocalSpawnHandle       10   260.56 us
-TokioCt                           LocalSpawnHandleOs     10   268.46 us
+tokio::Runtime (LocalSet)         native                 10   33.328 us
+TokioCt                           LocalSpawn             10   34.737 us
+TokioCt                           LocalSpawnHandle       10   53.672 us
 
-ThreadPool                        Spawn                  10   228.94 us
-ThreadPool                        SpawnHandle            10   268.12 us
-ThreadPool                        SpawnHandleOs          10   271.40 us
+ThreadPool                        Spawn                  10   233.73 us
+ThreadPool                        SpawnHandle            10   276.03 us
 
-tokio::Runtime                    native                 10   88.444 us
-tokio::Runtime (basic_scheduler)  native                 10   238.02 us
-TokioTp                           Spawn                  10   85.854 us
-TokioTp                           SpawnHandle            10   94.428 us
-TokioTp                           SpawnHandleOs          10   95.026 us
+tokio::Runtime                    native                 10   95.656 us
+TokioTp                           Spawn                  10   92.409 us
+TokioTp                           SpawnHandle            10   104.40 us
 
-async_std::task                   native                 10   70.200 us
-AsyncStd                          Spawn                  10   93.593 us
-AsyncStd                          SpawnHandle            10   84.071 us
-AsyncStd                          SpawnHandleOs          10   75.715 us
+async_std::task                   native                 10   101.35 us
+AsyncStd                          Spawn                  10   121.77 us
+AsyncStd                          SpawnHandle            10   106.85 us
 
-LocalPool                         LocalSpawn            100   3.2316 ms
-LocalPool                         LocalSpawnHandle      100   5.0745 ms
-LocalPool                         LocalSpawnHandleOs    100   5.1460 ms
+LocalPool                         LocalSpawn            100   3.1649 ms
+LocalPool                         LocalSpawnHandle      100   5.1421 ms
 
-TokioCt                           LocalSpawn            100   23.873 ms
-TokioCt                           LocalSpawnHandle      100   28.017 ms
-TokioCt                           LocalSpawnHandleOs    100   28.402 ms
+tokio::Runtime (LocalSet)         native                100   3.0230 ms
+TokioCt                           LocalSpawn            100   3.0517 ms
+TokioCt                           LocalSpawnHandle      100   5.2575 ms
 
-ThreadPool                        Spawn                 100   15.105 ms
-ThreadPool                        SpawnHandle           100   15.320 ms
-ThreadPool                        SpawnHandleOs         100   15.154 ms
+ThreadPool                        Spawn                 100   14.940 ms
+ThreadPool                        SpawnHandle           100   15.041 ms
 
-tokio::Runtime                    native                100   1.7972 ms
-tokio::Runtime (basic_scheduler)  native                100   25.904 ms
-TokioTp                           Spawn                 100   1.5723 ms
-TokioTp                           SpawnHandle           100   1.9379 ms
-TokioTp                           SpawnHandleOs         100   1.8808 ms
+tokio::Runtime                    native                100   1.8322 ms
+TokioTp                           Spawn                 100   1.6033 ms
+TokioTp                           SpawnHandle           100   1.9112 ms
 
-async_std::task                   native                100   855.92 us
-AsyncStd                          Spawn                 100   1.0351 ms
-AsyncStd                          SpawnHandle           100   937.66 us
-AsyncStd                          SpawnHandleOs         100   964.51 us
+async_std::task                   native                100   785.92 us
+AsyncStd                          Spawn                 100   950.68 us
+AsyncStd                          SpawnHandle           100   905.42 us
 
-LocalPool                         LocalSpawn            200   12.919 ms
-LocalPool                         LocalSpawnHandle      200   20.120 ms
-LocalPool                         LocalSpawnHandleOs    200   20.615 ms
+LocalPool                         LocalSpawn            200   12.334 ms
+LocalPool                         LocalSpawnHandle      200   20.535 ms
 
-TokioCt                           LocalSpawn            200   94.493 ms
-TokioCt                           LocalSpawnHandle      200   116.43 ms
-TokioCt                           LocalSpawnHandleOs    200   118.19 ms
+tokio::Runtime (LocalSet)         native                200   11.850 ms
+TokioCt                           LocalSpawn            200   11.743 ms
+TokioCt                           LocalSpawnHandle      200   24.448 ms
 
-ThreadPool                        Spawn                 200   57.790 ms
-ThreadPool                        SpawnHandle           200   58.886 ms
-ThreadPool                        SpawnHandleOs         200   57.828 ms
+ThreadPool                        Spawn                 200   58.284 ms
+ThreadPool                        SpawnHandle           200   59.411 ms
 
-tokio::Runtime                    native                200   4.7856 ms
-tokio::Runtime (basic_scheduler)  native                200   108.65 ms
-TokioTp                           Spawn                 200   3.5806 ms
-TokioTp                           SpawnHandle           200   5.0798 ms
-TokioTp                           SpawnHandleOs         200   5.1429 ms
+tokio::Runtime                    native                200   4.8219 ms
+TokioTp                           Spawn                 200   3.6299 ms
+TokioTp                           SpawnHandle           200   4.9988 ms
 
-async_std::task                   native                200   2.4121 ms
-AsyncStd                          Spawn                 200   2.6799 ms
-AsyncStd                          SpawnHandle           200   2.7550 ms
-AsyncStd                          SpawnHandleOs         200   2.8141 ms
+async_std::task                   native                200   2.2333 ms
+AsyncStd                          Spawn                 200   2.4586 ms
+AsyncStd                          SpawnHandle           200   2.6674 ms
 ```
 
 ### Breakdown
+
+#### Differences from 0.1
+
+We now use `tokio::task::LocalSet` for spawning `!Send` futures. This massively improves the performance.
+The non object safe `SpawnHandle` traits have been removed since the 0.1 benchmarks have shown that
+boxing was really cheap.
 
 We'll be looking at the N=200 benchmarks here, because I think these have the best signal/noise ratio.
 These benchmarks spawn about 40,200 tasks each.
@@ -117,35 +113,23 @@ The different spawn API's compared here:
 - `Spawn`/`LocalSpawn`: The traits from _futures_, implemented on a wrapper in _async_executors_. Note that these
   traits take `FutureObj`, which is a `no_std` compatible equivalent to `Box<dyn Future>`, so we'd expect to
   see some overhead compared to native.
-  _async_executors_ also provides `LocalSpawn` for the `tokio` runtime with basic scheduler, even though out of the
-  box this Runtime does not provide an API for spawning `!Send` futures. Therefor there is no `native` version to compare.
 
 - `SpawnHandle`/`LocalSpawnHandle`: Traits from _async_executors_ that return a `JoinHandle`. This `JoinHandle` is
   executor agnostic and wraps the native JoinHandle types from executors that provide one. The traits are
   implemented on the _futures_ executors, where `futures_util::future::RemoteHandle` is used.
   In order to make a consistent and feature full API, we wrap the futures in `futures_util::future::Abortable`
   on both _tokio_ and _async_std_, so it's possible to both cancel a running future and detach from it.
-  It's expected to see some overhead from `Abortable`, however we no longer need to box the futures as with `Spawn`/`LocalSpawn`.
-  The _futures_ executors get the worst of it with both boxing and the overhead from `RemoteHandle`. `TokioCt` also
+  It's expected to see some overhead from `Abortable`. These traits also take a `FutureObj` so an extra allocation takes place.
+  The _futures_ executors get the worst of it with the overhead from `RemoteHandle`. `TokioCt` also
   pays for `RemoteHandle` since the native `JoinHandle` does not support an output type that is `!Send`.
-
-- `SpawnHandleOs`/`SpawnHandleLocalOs`: The disadvantage of the previous traits is that they are not object safe.
-  This is severely limiting for API's that need to store an executor for usage over some time. The price for object
-  safety here is that the trait needs to be generic over the `Future::Output` associated type and that we need to
-  box the future again. So we look at the benchmark to see how much this boxing actually costs.
 
 ### Conclusions
 
-The benchmarks teach us that boxing, both in `Spawn` and in `SpawnHandleOs` is particularly cheap. We get about
-1.5ns/spawn overhead. The benchmark isn't even precise enough to measure this, as sometimes `SpawnHandleOs` shows
-faster results than `SpawnHandle`. Most applications will not have to spawn 40k tasks in a short period of time, so this is
-neglectable in my opinion.
+We can see that the total overhead going from native to SpawnHandle lays between 4ns and 10ns per spawn. About
+19.4% for async-std and 3.6% for TokioTp. This includes the price of extra boxing as well as using `AbortHandle`
+to enable both detaching and dropping a future from the JoinHandle. I feel the added interoperability is well worth the price.
 
-Adding extra functionality around futures with `Abortable` in `SpawnHandle` is more costly. Going from the native to
-`SpawnHandle` benchmarks we get between 4ns and 8ns per spawn.
-
-I think the extra benefits of interoperability and consistent API outweigh the performance cost by far for any practical
-application.
+Where the use of RemoteHandle is required (futures executors and TokioCt), the price is more like 30ns per spawn.
 
 There is a large gap in spawn overhead between _tokio_ and _async_std_, with _async_std_ being up to twice as fast,
 but don't be fooled, this benchmark is not meant to make a meaningful comparison between the two and it's not a good
