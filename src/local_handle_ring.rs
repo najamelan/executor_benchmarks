@@ -69,7 +69,7 @@ impl LocalHandleRing
 
 	// Run the benchmark.
 	//
-	pub async fn run( &mut self, exec: impl LocalSpawnHandle + Clone + 'static )
+	pub async fn run( &mut self, exec: impl LocalSpawnHandle<()> + Clone + 'static )
 	{
 		debug!( "LocalHandleRing: start" );
 
@@ -106,7 +106,7 @@ pub struct LocalHandleNode
 
 impl LocalHandleNode
 {
-	async fn run( &mut self, exec: impl LocalSpawnHandle )
+	async fn run( &mut self, exec: impl LocalSpawnHandle<()> )
 	{
 		debug!( "LocalHandleNode {}: run", self.id );
 

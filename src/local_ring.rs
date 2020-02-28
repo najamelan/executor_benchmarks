@@ -117,43 +117,6 @@ impl LocalRing
 		//
 		// DONE.store( 0, Ordering::SeqCst );
 	}
-
-
-
-	// Run the benchmark on a local pool.
-	//
-	pub async fn run_local( &mut self, exec: impl LocalSpawn + Spawn + Clone + 'static )
-	{
-		debug!( "LocalRing: start" );
-
-		// Need to reset the DONE counter, since it might be reused on repeated benchmarks.
-		//
-		DONE.store( 0, Ordering::SeqCst );
-
-
-		let (done_tx, mut done_rx) = mpsc::channel(0);
-
-
-		for mut node in self.nodes.take().unwrap().into_iter()
-		{
-			let done_tx = done_tx.clone();
-
-			let exec2 = exec.clone();
-			exec.spawn_local( async move { node.run( done_tx, exec2 ).await; } ).expect( "spawn node" );
-		};
-
-		let res = done_rx.next().await;
-
-		debug_assert!( res.is_some() );
-		drop( exec );
-
-		debug!( "LocalRing: end" );
-
-
-		// Just a memory barrier.
-		//
-		// DONE.store( 0, Ordering::SeqCst );
-	}
 }
 
 
