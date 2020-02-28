@@ -31,78 +31,82 @@ The following results are from running `cargo bench --bench ring` on a machine w
 - CPU: AMD® Ryzen 9 3900x 12-core processor × 24
 - Memory: GSKILL DDR4 32GB (4x8) F4-3600C18Q-32GVK
 - MB: Gigabyte X570 Aorus Elite
+- rustc: rustc 1.43.0-nightly (6fd8798f4 2020-02-25) (codegen-units=1)
+- futures: 0.3.4
+- tokio: 0.2.12
+- async-std: 1.5.0
 
 ```
 Executor                          spawn API               N   avg time/iter
 ----------------------------------------------------------------------------
-LocalPool                         LocalSpawn             10   32.607 us
-LocalPool                         LocalSpawnHandle       10   54.327 us
-LocalPool                         LocalSpawnHandleOs     10   55.195 us
+LocalPool                         LocalSpawn             10   31.845 us
+LocalPool                         LocalSpawnHandle       10   50.395 us
+LocalPool                         LocalSpawnHandleOs     10   54.088 us
 
-TokioCt                           LocalSpawn             10   227.04 us
-TokioCt                           LocalSpawnHandle       10   260.56 us
-TokioCt                           LocalSpawnHandleOs     10   268.46 us
+TokioCt                           LocalSpawn             10   227.33 us
+TokioCt                           LocalSpawnHandle       10   263.94 us
+TokioCt                           LocalSpawnHandleOs     10   263.93 us
 
-ThreadPool                        Spawn                  10   228.94 us
-ThreadPool                        SpawnHandle            10   268.12 us
-ThreadPool                        SpawnHandleOs          10   271.40 us
+ThreadPool                        Spawn                  10   233.51 us
+ThreadPool                        SpawnHandle            10   273.45 us
+ThreadPool                        SpawnHandleOs          10   275.13 us
 
-tokio::Runtime                    native                 10   88.444 us
-tokio::Runtime (basic_scheduler)  native                 10   238.02 us
-TokioTp                           Spawn                  10   85.854 us
-TokioTp                           SpawnHandle            10   94.428 us
-TokioTp                           SpawnHandleOs          10   95.026 us
+tokio::Runtime                    native                 10   92.645 us
+tokio::Runtime (basic_scheduler)  native                 10   242.73 us
+TokioTp                           Spawn                  10   87.222 us
+TokioTp                           SpawnHandle            10   98.339 us
+TokioTp                           SpawnHandleOs          10   103.25 us
 
-async_std::task                   native                 10   70.200 us
-AsyncStd                          Spawn                  10   93.593 us
-AsyncStd                          SpawnHandle            10   84.071 us
-AsyncStd                          SpawnHandleOs          10   75.715 us
+async_std::task                   native                 10   93.223 us
+AsyncStd                          Spawn                  10   115.45 us
+AsyncStd                          SpawnHandle            10   102.16 us
+AsyncStd                          SpawnHandleOs          10   115.91 us
 
-LocalPool                         LocalSpawn            100   3.2316 ms
-LocalPool                         LocalSpawnHandle      100   5.0745 ms
-LocalPool                         LocalSpawnHandleOs    100   5.1460 ms
+LocalPool                         LocalSpawn            100   3.0533 ms
+LocalPool                         LocalSpawnHandle      100   4.7691 ms
+LocalPool                         LocalSpawnHandleOs    100   4.8401 ms
 
-TokioCt                           LocalSpawn            100   23.873 ms
-TokioCt                           LocalSpawnHandle      100   28.017 ms
-TokioCt                           LocalSpawnHandleOs    100   28.402 ms
+TokioCt                           LocalSpawn            100   24.009 ms
+TokioCt                           LocalSpawnHandle      100   28.446 ms
+TokioCt                           LocalSpawnHandleOs    100   28.356 ms
 
-ThreadPool                        Spawn                 100   15.105 ms
-ThreadPool                        SpawnHandle           100   15.320 ms
-ThreadPool                        SpawnHandleOs         100   15.154 ms
+ThreadPool                        Spawn                 100   15.179 ms
+ThreadPool                        SpawnHandle           100   14.993 ms
+ThreadPool                        SpawnHandleOs         100   14.934 ms
 
-tokio::Runtime                    native                100   1.7972 ms
-tokio::Runtime (basic_scheduler)  native                100   25.904 ms
-TokioTp                           Spawn                 100   1.5723 ms
-TokioTp                           SpawnHandle           100   1.9379 ms
-TokioTp                           SpawnHandleOs         100   1.8808 ms
+tokio::Runtime                    native                100   1.8536 ms
+tokio::Runtime (basic_scheduler)  native                100   24.733 ms
+TokioTp                           Spawn                 100   1.5156 ms
+TokioTp                           SpawnHandle           100   1.9753 ms
+TokioTp                           SpawnHandleOs         100   1.9111 ms
 
-async_std::task                   native                100   855.92 us
-AsyncStd                          Spawn                 100   1.0351 ms
-AsyncStd                          SpawnHandle           100   937.66 us
-AsyncStd                          SpawnHandleOs         100   964.51 us
+async_std::task                   native                100   802.42 us
+AsyncStd                          Spawn                 100   965.16 ms
+AsyncStd                          SpawnHandle           100   895.66 us
+AsyncStd                          SpawnHandleOs         100   942.06 us
 
-LocalPool                         LocalSpawn            200   12.919 ms
-LocalPool                         LocalSpawnHandle      200   20.120 ms
-LocalPool                         LocalSpawnHandleOs    200   20.615 ms
+LocalPool                         LocalSpawn            200   12.008 ms
+LocalPool                         LocalSpawnHandle      200   19.234 ms
+LocalPool                         LocalSpawnHandleOs    200   20.288 ms
 
-TokioCt                           LocalSpawn            200   94.493 ms
-TokioCt                           LocalSpawnHandle      200   116.43 ms
-TokioCt                           LocalSpawnHandleOs    200   118.19 ms
+TokioCt                           LocalSpawn            200   95.733 ms
+TokioCt                           LocalSpawnHandle      200   116.63 ms
+TokioCt                           LocalSpawnHandleOs    200   118.09 ms
 
-ThreadPool                        Spawn                 200   57.790 ms
-ThreadPool                        SpawnHandle           200   58.886 ms
-ThreadPool                        SpawnHandleOs         200   57.828 ms
+ThreadPool                        Spawn                 200   59.864 ms
+ThreadPool                        SpawnHandle           200   57.591 ms
+ThreadPool                        SpawnHandleOs         200   58.794 ms
 
-tokio::Runtime                    native                200   4.7856 ms
-tokio::Runtime (basic_scheduler)  native                200   108.65 ms
-TokioTp                           Spawn                 200   3.5806 ms
-TokioTp                           SpawnHandle           200   5.0798 ms
-TokioTp                           SpawnHandleOs         200   5.1429 ms
+tokio::Runtime                    native                200   4.8662 ms
+tokio::Runtime (basic_scheduler)  native                200   109.02 ms
+TokioTp                           Spawn                 200   3.5564 ms
+TokioTp                           SpawnHandle           200   5.0675 ms
+TokioTp                           SpawnHandleOs         200   5.1405 ms
 
-async_std::task                   native                200   2.4121 ms
-AsyncStd                          Spawn                 200   2.6799 ms
-AsyncStd                          SpawnHandle           200   2.7550 ms
-AsyncStd                          SpawnHandleOs         200   2.8141 ms
+async_std::task                   native                200   2.2350 ms
+AsyncStd                          Spawn                 200   2.4660 ms
+AsyncStd                          SpawnHandle           200   2.5657 ms
+AsyncStd                          SpawnHandleOs         200   2.6708 ms
 ```
 
 ### Breakdown

@@ -29,43 +29,40 @@ fn ring( c: &mut Criterion )
 
 		group.bench_function( format!( "LocalPool spawn_local {}", &nodes ), |b|
 		{
+			let mut pool = LocalPool::new();
+
 			b.iter( ||
 			{
-				let mut pool     = LocalPool::new();
-				let     spawner  = pool.spawner();
-				let     spawner2 = spawner.clone();
+				let     spawner = pool.spawner();
+				let mut ring    = LocalRing::new( *nodes );
 
-				let mut ring = LocalRing::new( *nodes );
-
-				pool.run_until( ring.run( spawner2 ) );
+				pool.run_until( ring.run( spawner ) );
 			});
 		});
 
 		group.bench_function( format!( "LocalPool spawn_handle_local {}", &nodes ), |b|
 		{
+			let mut pool = LocalPool::new();
+
 			b.iter( ||
 			{
-				let mut pool     = LocalPool::new();
-				let     spawner  = pool.spawner();
-				let     spawner2 = spawner.clone();
+				let     spawner = pool.spawner();
+				let mut ring    = LocalHandleRing::new( *nodes );
 
-				let mut ring = LocalHandleRing::new( *nodes );
-
-				pool.run_until( ring.run( spawner2 ) );
+				pool.run_until( ring.run( spawner ) );
 			});
 		});
 
 		group.bench_function( format!( "LocalPool spawn_handle_local_os {}", &nodes ), |b|
 		{
+			let mut pool = LocalPool::new();
+
 			b.iter( ||
 			{
-				let mut pool     = LocalPool::new();
-				let     spawner  = pool.spawner();
-				let     spawner2 = spawner.clone();
+				let     spawner = pool.spawner();
+				let mut ring    = LocalHandleRingOs::new( *nodes );
 
-				let mut ring = LocalHandleRingOs::new( *nodes );
-
-				pool.run_until( ring.run( spawner2 ) );
+				pool.run_until( ring.run( spawner ) );
 			});
 		});
 
@@ -92,40 +89,38 @@ fn ring( c: &mut Criterion )
 
 		group.bench_function( format!( "TokioCt spawn_handle_local {}", &nodes ), |b|
 		{
-			let     pool  = TokioCt::try_from( &mut Builder::new() ).expect( "build tokio basic_scheduler" );
-			let mut pool2 = pool.clone();
+			let mut pool = TokioCt::try_from( &mut Builder::new() ).expect( "build tokio basic_scheduler" );
 
 			b.iter( ||
 			{
-				let pool3 = pool.clone();
+				let pool2 = pool.clone();
 
 				let bench = async move
 				{
 					let mut ring = LocalHandleRing::new( *nodes );
-					ring.run( pool3 ).await;
+					ring.run( pool2 ).await;
 				};
 
-				pool2.block_on( bench );
+				pool.block_on( bench );
 			});
 		});
 
 
 		group.bench_function( format!( "TokioCt spawn_handle_local_os {}", &nodes ), |b|
 		{
-			let     pool  = TokioCt::try_from( &mut Builder::new() ).expect( "build tokio basic_scheduler" );
-			let mut pool2 = pool.clone();
+			let mut pool = TokioCt::try_from( &mut Builder::new() ).expect( "build tokio basic_scheduler" );
 
 			b.iter( ||
 			{
-				let pool3 = pool.clone();
+				let pool2 = pool.clone();
 
 				let bench = async move
 				{
 					let mut ring = LocalHandleRingOs::new( *nodes );
-					ring.run( pool3 ).await;
+					ring.run( pool2 ).await;
 				};
 
-				pool2.block_on( bench );
+				pool.block_on( bench );
 			});
 		});
 
