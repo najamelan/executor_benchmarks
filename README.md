@@ -2,6 +2,7 @@
 
 This repository holds some benchmarks for async executors in Rust. Currently there is but one benchmark, trying to evaluate the
 overhead introduced by the different spawning traits provided by the [async_executors](https://crates.io/crates/async_executors) crate.
+This branch holds the benchmarks for async_executors version 0.1. See the [master branch](https://github.com/najamelan/executor_benchmarks) for other versions.
 
 ## Ring: concurrent message passing
 
